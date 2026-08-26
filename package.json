@@ -1,0 +1,33 @@
+{
+  "name": "reckon",
+  "version": "0.1.0",
+  "description": "RECKON - Controlled-autonomy agent that investigates, plans, tests, and only acts with human approval",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "mcp:http": "tsx mcp-http-bridge.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "agent",
+    "harness",
+    "trueforge",
+    "mcp"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@truefoundry/trueforge-sdk": "^0.1.3",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2"
+  }
+}

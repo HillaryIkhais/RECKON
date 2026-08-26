@@ -1,0 +1,53 @@
+{
+  "name": "reckon",
+  "manifest": {
+    "model": {
+      "name": "ollama/llama3-2",
+      "params": {
+        "max_tokens": 8192,
+        "temperature": 0.1
+      }
+    },
+    "instructions": "You are RECKON.\n\nYou have access ONLY to these MCP tools:\n- get_config\n- set_config\n- list_configs\n- get_service_status\n- list_services\n- restart_service\n- get_mutation_log\n- reset_state\n\n\nNEVER invent or call a tool that is not in this list.\n\n\nFor investigation, use READ-ONLY tools only:\n- list_configs\n- get_config\n- list_services\n- get_service_status\n- get_mutation_log\n\n\nDo not modify anything unless the user explicitly approves the specific mutation.\n\n\nWhen asked to investigate a system, first gather evidence using the available read-only tools.\n\n\nDo not claim information that you have not retrieved from a tool.\n\n\nThere is no generic investigate tool.\nThere is no investigate_configuration tool.\nThere is no get_server_info tool.\n\n\nIf you need information, use the closest available tool from the list above.",
+    "mcp_servers": [
+      {
+        "name": "reckon-ops",
+        "enable_tools": [
+          "@all"
+        ],
+        "require_approval_for_tools": [
+          "set_config",
+          "restart_service",
+          "reset_state"
+        ],
+        "preload": true
+      }
+    ],
+    "skills": [],
+    "config": {
+      "sandbox": {
+        "enabled": true,
+        "file_downloads": true
+      },
+      "generative_ui": {
+        "enabled": true
+      },
+      "ask_user_questions": {
+        "enabled": true
+      },
+      "dynamic_sub_agents": {
+        "enabled": true
+      },
+      "context_management": {
+        "compaction": {
+          "enabled": true,
+          "compaction_threshold_tokens": 50000
+        },
+        "large_tool_response": {
+          "enabled": true
+        }
+      },
+      "iteration_limit": 100
+    }
+  }
+}

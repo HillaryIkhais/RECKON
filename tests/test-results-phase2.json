@@ -1,0 +1,60 @@
+[
+  {
+    "test": "TEST 1 — INFRASTRUCTURE AUDIT",
+    "status": "PASS",
+    "evidence": [
+      "TrueForge running: true",
+      "Model providers: 1",
+      "  - ollama (custom)",
+      "MCP servers: 1",
+      "  - reckon-ops (remote)",
+      "Bridge running: true",
+      "Sandbox enabled: true"
+    ],
+    "details": "Infrastructure ready: model + MCP configured"
+  },
+  {
+    "test": "TEST 2 — MCP VIA TRUEFORGE",
+    "status": "PASS",
+    "evidence": [
+      "reckon-ops registered: type=remote, url=http://localhost:3001/mcp",
+      "Tools via TrueForge: 8",
+      "Tool names: get_config, set_config, list_configs, get_service_status, list_services, restart_service, get_mutation_log, reset_state",
+      "All 8 expected tools present",
+      "Bridge reachable: true"
+    ],
+    "details": "MCP registered in TrueForge, 8 tools available via API"
+  },
+  {
+    "test": "TEST 3 — SANDBOX CAPABILITY",
+    "status": "BLOCKED",
+    "evidence": [
+      "Sandbox enabled in capabilities: true",
+      "Sandbox provider configured: false"
+    ],
+    "details": "Sandbox enabled but no provider configured - sessions can be created but code won't execute",
+    "requiresAction": "Configure a sandbox provider in TrueForge UI"
+  },
+  {
+    "test": "TEST 4 — MCP INTEGRATION",
+    "status": "PASS",
+    "evidence": [
+      "MCP servers configured: 1",
+      "  - reckon-ops: http://localhost:3001/mcp",
+      "    Tools: 8"
+    ],
+    "details": "1 MCP server(s) configured and accessible"
+  },
+  {
+    "test": "TEST 5 — AGENT CREATION",
+    "status": "PASS",
+    "evidence": [
+      "Provider: ollama",
+      "Model FQN: ollama/llama3-2",
+      "Create agent response: 201",
+      "Agent created: 01m0sqb2w5g7rpww0jywxe8kkr",
+      "Test agent cleaned up"
+    ],
+    "details": "Agent created with model ollama/llama3-2"
+  }
+]

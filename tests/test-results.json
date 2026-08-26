@@ -1,0 +1,18 @@
+[
+  {
+    "test": "TEST 1 — REAL MCP",
+    "status": "ERROR",
+    "evidence": [
+      "Error: UnprocessableEntityError: UnprocessableEntityError\nStatus code: 422\nBody: {\n  \"error\": {\n    \"message\": \"Unknown model \\\"anthropic/claude-sonnet-4-6\\\" — provider not configured\"\n  }\n}"
+    ],
+    "details": "UnprocessableEntityError: UnprocessableEntityError\nStatus code: 422\nBody: {\n  \"error\": {\n    \"message\": \"Unknown model \\\"anthropic/claude-sonnet-4-6\\\" — provider not configured\"\n  }\n}"
+  },
+  {
+    "test": "TEST 2 — REAL SANDBOX",
+    "status": "ERROR",
+    "evidence": [
+      "Error: UnprocessableEntityError: UnprocessableEntityError\nStatus code: 422\nBody: {\n  \"error\": {\n    \"message\": \"Unknown model \\\"anthropic/claude-sonnet-4-6\\\" — provider not configured\"\n  }\n}"
+    ],
+    "details": "UnprocessableEntityError: UnprocessableEntityError\nStatus code: 422\nBody: {\n  \"error\": {\n    \"message\": \"Unknown model \\\"anthropic/claude-sonnet-4-6\\\" — provider not configured\"\n  }\n}"
+  }
+]

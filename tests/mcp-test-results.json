@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "evidence": [
+    "Initialize: true",
+    "Tools listed: 8",
+    "get_config result: {\"key\":\"database.host\",\"value\":\"db.prod.example.com\",\"updatedAt\":\"2026-08-24T00:00:00Z\",\"updatedBy\":\"system\"}",
+    "set_config result: \"{\\\"success\\\":true,\\\"key\\\":\\\"database.host\\\",\\\"previousValue\\\":\\\"db.prod.example.com\\\",\\\"newValue\\\":\\\"db.test.example.com\\\"}\"",
+    "Verify get_config: {\"key\":\"database.host\",\"value\":\"db.test.example.com\",\"updatedAt\":\"2026-08-24T09:25:00.354Z\",\"updatedBy\":\"agent\"}",
+    "Mutation persisted: true",
+    "Mutation log: [{\"timestamp\":\"2026-08-24T09:25:00.355Z\",\"tool\":\"set_config\",\"args\":{\"key\":\"database.host\",\"value\":\"db.test.example.com\"},\"success\":true,\"previousState\":{\"value\":\"db.prod.example.com\",\"updatedAt\":\"2026-08-24T00:00:00Z\",\"updatedBy\":\"system\"},\"newState\":{\"value\":\"db.test.example.com\",\"updatedAt\":\"2026-08-24T09:25:00.354Z\",\"updatedBy\":\"agent\"}}]",
+    "Log has mutation: true",
+    "All configs: {\"database.host\":{\"value\":\"db.test.example.com\",\"updatedAt\":\"2026-08-24T09:25:00.354Z\",\"updatedBy\":\"agent\"},\"database.port\":{\"value\":\"5432\",\"updatedAt\":\"2026-08-24T00:00:00Z\",\"updatedBy\":\"system\"},\"da"
+  ]
+}
