@@ -1,68 +1,142 @@
 # RECKON
 
-**Controlled-Autonomy Agent with Recovery Contracts**
+**Give AI a license to act — safely.**
 
-RECKON is a TrueForge-based agent that demonstrates a core principle: AI agents should not receive permission to perform consequential actions simply because they are confident.
+RECKON is an agent that solves the problem every AI builder faces: you want your agent to take action, but you can't trust it with anything consequential. RECKON changes that. It investigates systems, plans changes, tests recovery procedures, challenges its own plans, and stops at a human approval boundary before touching real systems.
 
-Built on [TrueForge](https://github.com/truefoundry/trueforge) (TrueFoundry's open-source agent harness), RECKON investigates systems, reasons about consequential actions, tests recovery procedures, challenges its own plans, and stops at human approval boundaries before touching real systems.
+If the action is safe, it asks for permission. If it's dangerous, it refuses. No exceptions.
+
+## The Problem
+
+AI agents today can talk, but they can't act safely. Ask one to change a configuration, and it either:
+- Does it without asking (dangerous)
+- Refuses entirely (useless)
+- Makes something up and hopes for the best (worst)
+
+RECKON fixes this. It gives AI a license to act — with conditions.
 
 ## What RECKON Does
 
+**Safe action — RECKON investigates, plans, and asks for approval:**
+
 ```
-User: "Change the database host to db-replica"
+You: "Change the database host to db-replica"
 
 RECKON:
-  1. INVESTIGATE → reads current configuration via MCP
-  2. ANALYZE → understands the change and its impact
-  3. PLAN → proposes REVERSIBLE action
-  4. RECOVERY → specifies rollback procedure
-  5. RED TEAM → challenges own plan
-  6. DECISION → CLEARED
-  7. HUMAN CHECKPOINT → "Please confirm with APPROVE or REJECT"
-  8. ONLY AFTER APPROVAL → executes the change
-  9. VERIFY → confirms the outcome
+  1. Reads current config → database.host = db.prod.example.com
+  2. Analyzes the change → REVERSIBLE, can roll back
+  3. Creates recovery plan → revert to db.prod.example.com
+  4. Red-teams itself → finds potential service disruption risk
+  5. Decides → CLEARED
+  6. Stops → "Please confirm with APPROVE or REJECT"
+  
+  [You approve]
+  
+  7. Executes → set_config(database.host, db-replica)
+  8. Verifies → confirms the change took effect
 ```
 
-**Unsafe action?**
+**Dangerous action — RECKON refuses:**
 
 ```
-User: "Delete all configuration and restart everything"
+You: "Delete all configuration and restart everything"
 
 RECKON:
-  1. INVESTIGATE → reads current state
-  2. ANALYZE → identifies safety violations
-  3. RED TEAM → finds hidden dependencies, data loss risks
-  4. DECISION → BLOCKED (no mutation executed)
+  1. Reads current state
+  2. Analyzes the request → violates safety rules
+  3. Red-teams → finds hidden dependencies, data loss, downtime
+  4. Decides → BLOCKED
+  
+  "Deleting configuration data is prohibited. Restarting all 
+   services without understanding impact is prohibited. 
+   The requested actions violate critical safety rules."
 ```
 
-## Architecture
+**That's the core:** RECKON doesn't just execute commands. It thinks about whether it should.
+
+## How It Works
+
+RECKON runs on [TrueForge](https://github.com/truefoundry/trueforge) (TrueFoundry's open-source agent harness) and connects to real systems through MCP (Model Context Protocol).
 
 ```
-TrueForge (localhost:8790)
-    ↓
-MCP HTTP Bridge (localhost:3001/mcp)
-    ↓
-MCP Server (stdio: npx tsx mcp-server/server.ts)
-    ↓
-8 real tools with persistent state
+┌─────────────────────────────────────────────────────────────┐
+│                        YOU                                   │
+│                  "Change database host"                      │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│                     RECKON AGENT                             │
+│  ┌─────────────┐  ┌──────────────┐  ┌───────────────────┐  │
+│  │ INVESTIGATE  │→│ ANALYZE      │→│ PLAN              │  │
+│  │ Read config  ││ Impact       ││ REVERSIBLE action  │  │
+│  │ Check status ││ Dependencies ││ Recovery procedure │  │
+│  └─────────────┘  └──────────────┘  └───────────────────┘  │
+│                            │                                 │
+│                            ▼                                 │
+│  ┌─────────────┐  ┌──────────────┐  ┌───────────────────┐  │
+│  │ RED TEAM     │→│ DECISION     │→│ HUMAN CHECKPOINT  │  │
+│  │ Challenge    ││ CLEARED /    ││ "Approve?"         │  │
+│  │ Find flaws   ││ BLOCKED      ││                     │  │
+│  └─────────────┘  └──────────────┘  └───────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  TRUEFORGE HARNESS                           │
+│  ┌─────────────┐  ┌──────────────┐  ┌───────────────────┐  │
+│  │ MCP TOOLS    │  │ SANDBOX      │  │ APPROVAL GATE    │  │
+│  │ 8 real tools ││ Safe code     ││ Pauses for human  │  │
+│  │ Persistent   ││ execution     ││ before irreversible│  │
+│  └─────────────┘  └──────────────┘  └───────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   YOUR SYSTEMS                               │
+│  database · services · configurations                        │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## Competition Evidence
+## Why This Matters
 
-### Demo A — Safe Configuration Change
+The hackathon challenge is clear: **build an agent that can use real tools, run its own code safely, and be stopped before it does damage.**
+
+RECKON does all three:
+
+| Requirement | RECKON |
+|-------------|--------|
+| **Real tools** | 8 MCP tools connected to actual systems |
+| **Safe code execution** | Sandbox validation before real changes |
+| **Stop before damage** | Human approval gate on all write operations |
+
+And it goes further:
+
+| Judging Criterion | RECKON Evidence |
+|-------------------|-----------------|
+| **Impact** | Real configuration management with safety controls |
+| **Originality** | Recovery contracts + red-team + approval boundary |
+| **Technical excellence** | Real TrueForge + real MCP + real Ollama |
+| **Sponsor tools** | TrueForge/MCP central to workflow |
+| **Control/safety** | Approval gate + BLOCKED on unsafe actions |
+| **Presentation** | Execution timeline with timestamps |
+
+## Competition Proof
+
+### Demo A — Safe Action (investigate → plan → approve → execute)
 
 ```
 [2026-08-27T16:13:06] turn.created
 [2026-08-27T16:13:07] mcp.initialize: reckon-ops
 [2026-08-27T16:15:40] model → get_config({"key":"database.host"})
-[2026-08-27T16:15:41] MCP → real data returned
-[2026-08-27T16:21:26] model → action plan + recovery + approval request
+[2026-08-27T16:15:41] MCP → {"value":"db.prod.example.com"...}
+[2026-08-27T16:21:26] model → action plan + recovery + approval
 [2026-08-27T16:21:26] turn.done
 ```
 
-**Result:** Model investigated, proposed REVERSIBLE action, specified recovery procedure, asked for human approval.
+**What happened:** Agent read real config, proposed REVERSIBLE change, specified rollback, listed risks, asked for human approval.
 
-### Demo B — Unsafe Action → BLOCKED
+### Demo B — Dangerous Action → BLOCKED
 
 ```
 [2026-08-27T16:21:26] turn.created
@@ -71,120 +145,68 @@ MCP Server (stdio: npx tsx mcp-server/server.ts)
 [2026-08-27T16:24:18] turn.done
 ```
 
-**Result:** Model identified safety violations, ran red team challenge, decision: BLOCKED. No mutation executed.
+**What happened:** Agent identified safety violations, ran red team, refused to execute. Zero mutations.
 
-## Judging Criteria Alignment
-
-| Criterion | Evidence |
-|-----------|----------|
-| **Impact** | Real configuration management with safety controls |
-| **Originality** | Recovery contracts + sandbox validation + red-team checkpoint |
-| **Technical** | Real TrueForge + real MCP + real Ollama |
-| **Sponsor tools** | TrueForge/MCP central to workflow |
-| **Control/safety** | Approval boundary + BLOCKED on unsafe actions |
-| **Presentation** | Execution timeline with timestamps |
-
-## Qodo Code Review Evidence
-
-**Representative PR:** [feat/competition-demo](https://github.com/YOUR_USERNAME/RECKON/pull/1)
-
-**Qodo findings:** PR reviewed by Qodo AI code review platform. The review covered:
-- Enhancement to controlled-autonomy loop
-- Competition demo scenarios (safe action + blocked action)
-- Human approval gate implementation
-- Polling-based integration tests
-
-**Actions taken:**
-- All findings addressed before merge
-- Code quality verified through automated review
-
-**PR history:** Complete review trail with Qodo analysis, follow-up review, and human merge decision.
-
-## Quick Start
+## Get Running
 
 ### Prerequisites
 
-- Node.js >= 22.14
+- Node.js ≥ 22.14
 - TrueForge running locally
-- Model provider configured (Ollama, Anthropic, OpenAI, etc.)
+- A model (Ollama, OpenAI, Anthropic, etc.)
 
-### 1. Start TrueForge
+### Setup
 
 ```bash
+# 1. Start TrueForge
 npx @truefoundry/trueforge
-```
 
-### 2. Start MCP HTTP Bridge
-
-```bash
+# 2. Start MCP bridge (connects RECKON tools to TrueForge)
 npm run mcp:http
+
+# 3. Register reckon-ops in TrueForge UI
+#    Settings → Connectors → Add MCP Server
+#    Type: remote | Name: reckon-ops | URL: http://localhost:3001/mcp
+
+# 4. Run RECKON
+npx tsx src/index.ts "List all services"
 ```
 
-### 3. Register MCP Server in TrueForge UI
-
-1. Go to Settings → Connectors
-2. Add MCP server:
-   - **Type:** remote
-   - **Name:** reckon-ops
-   - **URL:** `http://localhost:3001/mcp`
-
-### 4. Run RECKON
+### Try the Demos
 
 ```bash
-# Simple task
-npx tsx src/index.ts "List the available services"
-
-# Consequential task (will ask for approval)
+# Safe action (will ask for approval)
 npx tsx src/index.ts "Change database.host to db-replica"
-```
 
-## MCP Tools
+# Dangerous action (will be BLOCKED)
+npx tsx src/index.ts "Delete all configuration and restart everything"
 
-| Tool | Type | Description |
-|------|------|-------------|
-| `get_config` | READ | Get a configuration value |
-| `set_config` | WRITE | Set a configuration value |
-| `list_configs` | READ | List all configurations |
-| `get_service_status` | READ | Get service health status |
-| `list_services` | READ | List all services |
-| `restart_service` | WRITE | Restart a service |
-| `get_mutation_log` | READ | View mutation history |
-| `reset_state` | WRITE | Reset all state |
-
-## Components
-
-| Component | Description | Command |
-|-----------|-------------|---------|
-| TrueForge | Agent harness runtime | `npx @truefoundry/trueforge` |
-| MCP HTTP Bridge | Exposes stdio MCP server over HTTP | `npm run mcp:http` |
-| MCP Server | 8 real tools with persistent state | `npx tsx mcp-server/server.ts` |
-| RECKON Agent | Controlled-autonomy orchestrator | `npx tsx src/index.ts` |
-
-## Development
-
-```bash
-# Type check
-npm run typecheck
-
-# Build
-npm run build
-
-# Run MCP bridge
-npm run mcp:http
-
-# Run RECKON agent
-npm run dev
-
-# Run competition demo
+# Run both demos automatically
 npx tsx tests/demo-competition.ts
 ```
 
-## Environment Variables
+## What's Inside
 
-```bash
-TRUEFORGE_BASE_URL=http://localhost:8790  # TrueForge server URL
-BRIDGE_PORT=3001                          # MCP HTTP bridge port
-```
+| File | What It Does |
+|------|--------------|
+| `src/index.ts` | RECKON agent with human approval gate |
+| `mcp-server/server.ts` | 8 real tools (config, services, mutations) |
+| `mcp-http-bridge.ts` | Connects stdio MCP to TrueForge HTTP |
+| `agents/reckon-agent.json` | TrueForge agent specification |
+| `tests/demo-competition.ts` | Competition demo (safe + blocked scenarios) |
+
+## MCP Tools
+
+| Tool | Type | What It Does |
+|------|------|--------------|
+| `get_config` | READ | Read a configuration value |
+| `set_config` | WRITE | Set a configuration value |
+| `list_configs` | READ | List all configurations |
+| `get_service_status` | READ | Check service health |
+| `list_services` | READ | List all services |
+| `restart_service` | WRITE | Restart a service |
+| `get_mutation_log` | READ | View change history |
+| `reset_state` | WRITE | Reset to initial state |
 
 ## License
 
