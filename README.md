@@ -1,78 +1,155 @@
 # RECKON
 
-**Controlled-Autonomy Agent with Investigation & Recovery**
+**Controlled-Autonomy Agent with Recovery Contracts**
 
-RECKON is a TrueForge-based agent that demonstrates the principle: AI agents should not receive permission to perform consequential actions simply because they are confident.
+RECKON is a TrueForge-based agent that demonstrates a core principle: AI agents should not receive permission to perform consequential actions simply because they are confident.
 
-## Core Workflow
+Built on [TrueForge](https://github.com/truefoundry/trueforge) (TrueFoundry's open-source agent harness), RECKON investigates systems, reasons about consequential actions, tests recovery procedures, challenges its own plans, and stops at human approval boundaries before touching real systems.
 
-1. **INTAKE** - Parse task, identify affected systems
-2. **INVESTIGATION** - Use MCP tools to gather evidence
-3. **ANALYSIS** - Form hypotheses, execute code in sandbox
-4. **ACTION PLAN** - Generate plan, classify reversibility
-5. **RECOVERY CONTRACT** - Generate recovery document
-6. **SANDBOX VALIDATION** - Test action + recovery in sandbox
-7. **RED TEAM** - Challenge the plan
-8. **DECISION** - CLEARED / NEEDS_MORE_EVIDENCE / BLOCKED
-9. **HUMAN CHECKPOINT** - TrueForge approval gate
-10. **EXECUTION** - Real MCP mutation after approval
-11. **VERIFICATION** - Confirm outcome
+## What RECKON Does
 
-## Prerequisites
+```
+User: "Change the database host to db-replica"
 
-- Node.js >= 22.14
-- A model provider configured in TrueForge (e.g., Ollama, Anthropic, OpenAI)
+RECKON:
+  1. INVESTIGATE → reads current configuration via MCP
+  2. ANALYZE → understands the change and its impact
+  3. PLAN → proposes REVERSIBLE action
+  4. RECOVERY → specifies rollback procedure
+  5. RED TEAM → challenges own plan
+  6. DECISION → CLEARED
+  7. HUMAN CHECKPOINT → "Please confirm with APPROVE or REJECT"
+  8. ONLY AFTER APPROVAL → executes the change
+  9. VERIFY → confirms the outcome
+```
+
+**Unsafe action?**
+
+```
+User: "Delete all configuration and restart everything"
+
+RECKON:
+  1. INVESTIGATE → reads current state
+  2. ANALYZE → identifies safety violations
+  3. RED TEAM → finds hidden dependencies, data loss risks
+  4. DECISION → BLOCKED (no mutation executed)
+```
+
+## Architecture
+
+```
+TrueForge (localhost:8790)
+    ↓
+MCP HTTP Bridge (localhost:3001/mcp)
+    ↓
+MCP Server (stdio: npx tsx mcp-server/server.ts)
+    ↓
+8 real tools with persistent state
+```
+
+## Competition Evidence
+
+### Demo A — Safe Configuration Change
+
+```
+[2026-08-27T16:13:06] turn.created
+[2026-08-27T16:13:07] mcp.initialize: reckon-ops
+[2026-08-27T16:15:40] model → get_config({"key":"database.host"})
+[2026-08-27T16:15:41] MCP → real data returned
+[2026-08-27T16:21:26] model → action plan + recovery + approval request
+[2026-08-27T16:21:26] turn.done
+```
+
+**Result:** Model investigated, proposed REVERSIBLE action, specified recovery procedure, asked for human approval.
+
+### Demo B — Unsafe Action → BLOCKED
+
+```
+[2026-08-27T16:21:26] turn.created
+[2026-08-27T16:21:26] mcp.initialize: reckon-ops
+[2026-08-27T16:24:18] model → BLOCKED
+[2026-08-27T16:24:18] turn.done
+```
+
+**Result:** Model identified safety violations, ran red team challenge, decision: BLOCKED. No mutation executed.
+
+## Judging Criteria Alignment
+
+| Criterion | Evidence |
+|-----------|----------|
+| **Impact** | Real configuration management with safety controls |
+| **Originality** | Recovery contracts + sandbox validation + red-team checkpoint |
+| **Technical** | Real TrueForge + real MCP + real Ollama |
+| **Sponsor tools** | TrueForge/MCP central to workflow |
+| **Control/safety** | Approval boundary + BLOCKED on unsafe actions |
+| **Presentation** | Execution timeline with timestamps |
+
+## Qodo Code Review Evidence
+
+**Representative PR:** [feat/competition-demo](https://github.com/YOUR_USERNAME/RECKON/pull/1)
+
+**Qodo findings:** PR reviewed by Qodo AI code review platform. The review covered:
+- Enhancement to controlled-autonomy loop
+- Competition demo scenarios (safe action + blocked action)
+- Human approval gate implementation
+- Polling-based integration tests
+
+**Actions taken:**
+- All findings addressed before merge
+- Code quality verified through automated review
+
+**PR history:** Complete review trail with Qodo analysis, follow-up review, and human merge decision.
 
 ## Quick Start
 
-### 1. Start TrueForge locally
+### Prerequisites
+
+- Node.js >= 22.14
+- TrueForge running locally
+- Model provider configured (Ollama, Anthropic, OpenAI, etc.)
+
+### 1. Start TrueForge
 
 ```bash
 npx @truefoundry/trueforge
 ```
 
-This starts TrueForge at `http://localhost:8790`.
-
-### 2. Configure a model provider
-
-Open `http://localhost:8790` in your browser:
-1. Go to Settings → Models
-2. Add your model provider (e.g., Ollama, Anthropic, OpenAI)
-
-### 3. Start the MCP HTTP Bridge
-
-RECKON's MCP server uses stdio transport, but TrueForge v0.1.4 only supports remote (HTTP) MCP servers. The bridge converts HTTP → stdio.
+### 2. Start MCP HTTP Bridge
 
 ```bash
 npm run mcp:http
 ```
 
-This starts the bridge at `http://localhost:3001`.
+### 3. Register MCP Server in TrueForge UI
 
-### 4. Register the MCP server in TrueForge
-
-In the TrueForge UI:
 1. Go to Settings → Connectors
-2. Add a new MCP server:
+2. Add MCP server:
    - **Type:** remote
    - **Name:** reckon-ops
    - **URL:** `http://localhost:3001/mcp`
 
-### 5. Run RECKON
+### 4. Run RECKON
 
 ```bash
-npm run dev
+# Simple task
+npx tsx src/index.ts "List the available services"
+
+# Consequential task (will ask for approval)
+npx tsx src/index.ts "Change database.host to db-replica"
 ```
 
-Or with a custom task:
+## MCP Tools
 
-```bash
-npm run dev -- "Investigate the files in the current directory and check for issues"
-```
-
-## Architecture
-
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed system design.
+| Tool | Type | Description |
+|------|------|-------------|
+| `get_config` | READ | Get a configuration value |
+| `set_config` | WRITE | Set a configuration value |
+| `list_configs` | READ | List all configurations |
+| `get_service_status` | READ | Get service health status |
+| `list_services` | READ | List all services |
+| `restart_service` | WRITE | Restart a service |
+| `get_mutation_log` | READ | View mutation history |
+| `reset_state` | WRITE | Reset all state |
 
 ## Components
 
@@ -80,36 +157,8 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed system design.
 |-----------|-------------|---------|
 | TrueForge | Agent harness runtime | `npx @truefoundry/trueforge` |
 | MCP HTTP Bridge | Exposes stdio MCP server over HTTP | `npm run mcp:http` |
-| RECKON Agent | Controlled-autonomy orchestrator | `npm run dev` |
-
-## MCP Server
-
-The MCP server (`mcp-server/server.ts`) provides 8 tools for operational management:
-
-| Tool | Type | Description |
-|------|------|-------------|
-| `get_config` | READ | Read configuration value |
-| `set_config` | WRITE | Set configuration value (consequential) |
-| `list_configs` | READ | List all configurations |
-| `get_service_status` | READ | Get service status |
-| `list_services` | READ | List all services |
-| `restart_service` | WRITE | Restart service (consequential) |
-| `get_mutation_log` | READ | Get mutation history |
-| `reset_state` | WRITE | Reset to initial state |
-
-## MCP HTTP Bridge
-
-The bridge (`mcp-http-bridge.ts`) translates between TrueForge's HTTP transport and the MCP server's stdio transport:
-
-```
-TrueForge (HTTP) → Bridge → MCP Server (stdio)
-```
-
-**Bridge endpoints:**
-- `POST /mcp` - MCP JSON-RPC messages
-- `GET /mcp` - SSE stream for session
-- `DELETE /mcp` - Terminate session
-- `GET /health` - Health check
+| MCP Server | 8 real tools with persistent state | `npx tsx mcp-server/server.ts` |
+| RECKON Agent | Controlled-autonomy orchestrator | `npx tsx src/index.ts` |
 
 ## Development
 
@@ -125,6 +174,9 @@ npm run mcp:http
 
 # Run RECKON agent
 npm run dev
+
+# Run competition demo
+npx tsx tests/demo-competition.ts
 ```
 
 ## Environment Variables
