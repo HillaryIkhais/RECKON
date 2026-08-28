@@ -43,7 +43,7 @@ async function waitForTurn(sessionId: string, turnId: string, maxPolls = 60, del
     await new Promise(resolve => setTimeout(resolve, delayMs));
     try {
       const response = await fetch(`${TRUEFORGE_BASE_URL}/api/v1/sessions/${sessionId}/turns/${turnId}`);
-      const data = await response.json();
+      const data = await response.json() as any;
       const status = data.data?.state?.status;
       if (status === "done" || status === "failed" || status === "cancelled") {
         return data.data;
@@ -58,7 +58,7 @@ async function waitForTurn(sessionId: string, turnId: string, maxPolls = 60, del
 async function getTurnEvents(sessionId: string): Promise<any[]> {
   try {
     const response = await fetch(`${TRUEFORGE_BASE_URL}/api/v1/sessions/${sessionId}/events`);
-    const data = await response.json();
+    const data = await response.json() as any;
     return data.data || [];
   } catch {
     return [];
@@ -112,7 +112,7 @@ async function testRealMCP(client: TrueForge): Promise<TestResult> {
         stream: false,
       }),
     });
-    const turnData = await turnResponse.json();
+    const turnData = await turnResponse.json() as any;
     const turnId = turnData.data.id;
     evidence.push(`Turn created: ${turnId}`);
     
@@ -228,7 +228,7 @@ IMPORTANT: You MUST actually execute code in the sandbox. Do not just describe w
         stream: false,
       }),
     });
-    const turnData = await turnResponse.json();
+    const turnData = await turnResponse.json() as any;
     const turnId = turnData.data.id;
     evidence.push(`Turn created: ${turnId}`);
     

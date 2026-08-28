@@ -44,7 +44,7 @@ async function checkBridgeRunning(): Promise<boolean> {
 async function getModelProviders(): Promise<any[]> {
   try {
     const response = await fetch(`${TRUEFORGE_BASE_URL}/api/v1/settings/model-providers`);
-    const data = await response.json();
+    const data = await response.json() as any;
     return data.data ?? [];
   } catch {
     return [];
@@ -54,7 +54,7 @@ async function getModelProviders(): Promise<any[]> {
 async function getMCPServers(): Promise<any[]> {
   try {
     const response = await fetch(`${TRUEFORGE_BASE_URL}/api/v1/settings/mcp-servers`);
-    const data = await response.json();
+    const data = await response.json() as any;
     return data.data ?? [];
   } catch {
     return [];
@@ -64,7 +64,7 @@ async function getMCPServers(): Promise<any[]> {
 async function getMCPTools(serverName: string): Promise<any[]> {
   try {
     const response = await fetch(`${TRUEFORGE_BASE_URL}/api/v1/mcp-servers/${serverName}/tools`);
-    const data = await response.json();
+    const data = await response.json() as any;
     return data.data ?? [];
   } catch {
     return [];
@@ -108,7 +108,7 @@ async function testInfrastructure(): Promise<TestResult> {
     evidence.push(`Bridge running: ${bridgeRunning}`);
     
     const capsResponse = await fetch(`${TRUEFORGE_BASE_URL}/api/v1/capabilities`);
-    const caps = await capsResponse.json();
+    const caps = await capsResponse.json() as any;
     evidence.push(`Sandbox enabled: ${caps.data?.sandbox?.enabled ?? false}`);
     
     const hasModel = providers.length > 0;
@@ -234,13 +234,13 @@ async function testSandboxCapability(): Promise<TestResult> {
   
   try {
     const capsResponse = await fetch(`${TRUEFORGE_BASE_URL}/api/v1/capabilities`);
-    const caps = await capsResponse.json();
+    const caps = await capsResponse.json() as any;
     const sandboxEnabled = caps.data?.sandbox?.enabled ?? false;
     evidence.push(`Sandbox enabled in capabilities: ${sandboxEnabled}`);
     
     // Check sandbox provider
     const sandboxResponse = await fetch(`${TRUEFORGE_BASE_URL}/api/v1/settings/sandbox-providers`);
-    const sandboxData = await sandboxResponse.json();
+    const sandboxData = await sandboxResponse.json() as any;
     const hasProvider = !sandboxData.error;
     evidence.push(`Sandbox provider configured: ${hasProvider}`);
     
@@ -388,7 +388,7 @@ async function testAgentCreation(): Promise<TestResult> {
       }),
     });
     
-    const data = await response.json();
+    const data = await response.json() as any;
     evidence.push(`Create agent response: ${response.status}`);
     
     if (response.ok) {
