@@ -38,47 +38,43 @@ async function runReckon(task: string): Promise<void> {
   const { data: session } = await client.sessions.create({
     agent: {
       spec: {
-        model: { name: "anthropic/claude-sonnet-4-6", params: { max_tokens: 8192, temperature: 0.1 } },
-        instructions: `You are RECKON, a controlled-autonomy agent. Your core principle: AI agents should not receive permission to perform consequential actions simply because they are confident.
+        model: { name: "ollama/qwen3-4b", params: { max_tokens: 8192, temperature: 0.1 } },
+        instructions: `You are RECKON, a controlled-autonomy operations agent.
 
-You follow a strict workflow:
-1. INTAKE: Parse the task, identify the desired outcome, affected systems, potentially consequential actions, and information required.
-2. INVESTIGATION: Use MCP read tools to gather evidence. Do NOT fabricate tool results. Maintain explicit investigation state.
-3. ANALYSIS: Form hypotheses. If computation is needed, generate code and execute it in the sandbox.
-4. ACTION PLAN: Generate a proposed action. Classify it: READ_ONLY, REVERSIBLE, COMPENSABLE, IRREVERSIBLE, or UNKNOWN. UNKNOWN actions must NOT be executed.
-5. RECOVERY CONTRACT: Before any consequential action, generate a Recovery Contract with: proposed action, preconditions, expected outcome, affected resources, blast radius, recovery procedure, recovery preconditions, verification conditions, reversibility classification, risks, and unresolved uncertainties.
-6. SANDBOX VALIDATION: Execute the proposed action against the sandbox. Then execute the recovery procedure. Verify the environment returns to expected state. Record before state, action, after-action state, recovery action, recovered state, and verification result. NEVER fake successful results.
-7. RED TEAM: Challenge your own plan. Look for missing preconditions, hidden dependencies, incomplete rollback, data loss, incorrect assumptions, side effects, recovery failure cases, and evidence contradicting the action.
-8. DECISION: Produce CLEARED, NEEDS_MORE_EVIDENCE, or BLOCKED. Only CLEARED reaches the human checkpoint.
-9. HUMAN CHECKPOINT: Show the human what will happen, why, evidence, expected impact, blast radius, reversibility, recovery procedure, recovery test result, red-team result. PAUSE here and wait for approval.
-10. EXECUTION: After approval, execute the real MCP mutation.
-11. POST-ACTION VERIFICATION: Use MCP tools to verify the intended outcome occurred, no unexpected side effects, and system state matches expectations.
+Use the available reckon-ops MCP tools directly. Never describe a tool call instead of performing it. Never claim an action was performed unless the tool actually returned a result.
 
-RULES:
-- NEVER execute an UNKNOWN or BLOCKED action.
-- NEVER fake sandbox or recovery results.
-- ALWAYS generate a recovery contract before consequential actions.
-- ALWAYS test recovery in sandbox before requesting approval.
-- The red team result MUST affect your decision.
-- Preserve complete execution history.`,
+Read-only operations may be performed autonomously. Before any write, destructive, or irreversible operation, stop and request human approval.
+
+After a tool returns successfully:
+- Treat the returned tool result as authoritative.
+- Answer the user's request using that result directly.
+- Do not call the same tool again unless the user explicitly requests another execution.
+- Do not refuse to display, summarize, or interpret tool output.
+- If the user asks for the actual tool result, return the result faithfully.
+- Do not invent information that is not present in the tool result.
+- Once the request has been fulfilled, stop.`,
         mcpServers: [
-          {
-            name: "filesystem",
-            enableTools: ["@all"],
-            requireApprovalForTools: ["write_file", "delete_file"],
-            preload: false,
-          },
-        ],
+  {
+    name: "reckon-ops",
+    enableTools: ["@all"],
+    requireApprovalForTools: [
+      "set_config",
+      "restart_service",
+      "reset_state"
+    ],
+    preload: true,
+  },
+],
         config: {
-          sandbox: { enabled: true, fileDownloads: true },
-          generativeUi: { enabled: true },
-          askUserQuestions: { enabled: true },
-          dynamicSubAgents: { enabled: true },
+          sandbox: { enabled: false },
+          generativeUi: { enabled: false },
+          askUserQuestions: { enabled: false },
+          dynamicSubAgents: { enabled: false },
           contextManagement: {
-            compaction: { enabled: true, compactionThresholdTokens: 50000 },
-            largeToolResponse: { enabled: true },
+            compaction: { enabled: false },
+            largeToolResponse: { enabled: false },
           },
-          iterationLimit: 100,
+          iterationLimit: 20,
         },
       },
     },
@@ -211,23 +207,58 @@ RULES:
           timestamp: new Date().toISOString(),
         });
 
-        // In a real implementation, this would show an approval UI
-        // For now, we'll auto-approve for testing
-        console.log("Auto-approving for testing purposes...\n");
-
-        const approvals: TrueForgeApi.UserToolApprovalEvent[] = [];
+        // Show what needs approval
         for (const pending of pendingApprovals) {
           for (const ref of pending.toolCalls) {
             const msg = events.get(ref.sourceEventId);
             if (msg?.type !== "model.message") continue;
             const call = (msg as any).toolCalls?.find((tc: any) => tc.id === ref.id);
             if (!call) continue;
-            console.log(`Approving: ${call.toolInfo.name}`);
+            console.log(`  Tool: ${call.toolInfo.name}`);
+            console.log(`  Arguments: ${call.function.arguments}`);
+          }
+        }
+
+        // Wait for human input
+        console.log("\n  Type 'approve' to allow, 'reject' to deny, or 'quit' to exit:");
+        const readline = await import("readline");
+        const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+        
+        const answer = await new Promise<string>((resolve) => {
+          rl.question("  > ", (ans) => {
+            rl.close();
+            resolve(ans.trim().toLowerCase());
+          });
+        });
+
+        if (answer === "quit") {
+          console.log("\nExiting...");
+          process.exit(0);
+        }
+
+        const approvalStatus = answer === "approve" ? "allow" : "deny";
+        console.log(`\n  ${approvalStatus === "allow" ? "✅ Approved" : "❌ Rejected"}\n`);
+
+        timeline.push({
+          phase: "HUMAN_CHECKPOINT",
+          event: `Human ${approvalStatus === "allow" ? "approved" : "rejected"}`,
+          timestamp: new Date().toISOString(),
+        });
+
+        // If rejected, stop here
+        if (approvalStatus !== "allow") {
+          console.log("Action rejected. Stopping.\n");
+          process.exit(0);
+        }
+
+        const approvals: TrueForgeApi.UserToolApprovalEvent[] = [];
+        for (const pending of pendingApprovals) {
+          for (const ref of pending.toolCalls) {
             approvals.push({
               type: "user.tool_approval",
               threadId: (pending as any).threadId,
               toolCallId: ref.id,
-              approval: { status: "allow" },
+              approval: { status: approvalStatus as "allow" | "deny" },
             });
           }
         }

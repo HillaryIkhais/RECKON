@@ -1,18 +1,20 @@
 [
   {
     "test": "TEST 1 — REAL MCP",
-    "status": "ERROR",
+    "status": "FAIL",
     "evidence": [
-      "Error: UnprocessableEntityError: UnprocessableEntityError\nStatus code: 422\nBody: {\n  \"error\": {\n    \"message\": \"Unknown model \\\"anthropic/claude-sonnet-4-6\\\" — provider not configured\"\n  }\n}"
+      "Session created: 01m11mznfz3rq5n7jjfwgqm508",
+      "Turn created: 01m11mzng7gtpt3de40wmapnj0.local"
     ],
-    "details": "UnprocessableEntityError: UnprocessableEntityError\nStatus code: 422\nBody: {\n  \"error\": {\n    \"message\": \"Unknown model \\\"anthropic/claude-sonnet-4-6\\\" — provider not configured\"\n  }\n}"
+    "details": "Turn did not complete within timeout"
   },
   {
     "test": "TEST 2 — REAL SANDBOX",
-    "status": "ERROR",
+    "status": "FAIL",
     "evidence": [
-      "Error: UnprocessableEntityError: UnprocessableEntityError\nStatus code: 422\nBody: {\n  \"error\": {\n    \"message\": \"Unknown model \\\"anthropic/claude-sonnet-4-6\\\" — provider not configured\"\n  }\n}"
+      "Session created: 01m11n55ngwr3hbdy277j04er1",
+      "Turn created: 01m11n55p0byh497rznkchmmm2.local"
     ],
-    "details": "UnprocessableEntityError: UnprocessableEntityError\nStatus code: 422\nBody: {\n  \"error\": {\n    \"message\": \"Unknown model \\\"anthropic/claude-sonnet-4-6\\\" — provider not configured\"\n  }\n}"
+    "details": "Turn did not complete within timeout"
   }
 ]
